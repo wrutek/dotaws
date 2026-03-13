@@ -19,17 +19,17 @@ classifiers = [
   "Topic :: System :: Systems Administration",
   "Typing :: Typed",
 ]
-
-[project.urls]
-Homepage = "https://github.com/wrutek/dotaws"
-Repository = "https://github.com/wrutek/dotaws"
-Issues = "https://github.com/wrutek/dotaws/issues"
 dependencies = [
   "typer>=0.16.0",
   "rich>=14.0.0",
   "boto3>=1.37.0",
   "botocore>=1.37.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/wrutek/dotaws"
+Repository = "https://github.com/wrutek/dotaws"
+Issues = "https://github.com/wrutek/dotaws/issues"
 
 [project.optional-dependencies]
 dev = [
