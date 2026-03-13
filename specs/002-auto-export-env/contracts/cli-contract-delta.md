@@ -3,6 +3,12 @@
 **Feature**: 002-auto-export-env  
 **Date**: 2026-03-13
 
+## Mechanism: Shell Wrapper Function
+
+The `dotaws hook print` snippet (already sourced in the user's shell profile) is extended to define a `dotaws()` shell wrapper function. This function intercepts `dotaws login` calls, runs the real binary, and **evaluates the export output directly in the current shell** — setting environment variables in the parent process without requiring the user to wrap calls in `eval`.
+
+For all other subcommands, the wrapper passes through to the real binary unchanged.
+
 ## Changed Command: `dotaws login`
 
 ### Before (current behavior)
@@ -15,7 +21,7 @@ export AWS_SECRET_ACCESS_KEY='...'
 export AWS_SESSION_TOKEN='...'
 ```
 
-Always prints export statements to stdout. User must copy-paste or wrap in `eval`.
+Prints export statements to stdout. User must copy-paste or wrap in `eval` — variables are **not** set in the current shell.
 
 ### After (new behavior)
 
@@ -28,7 +34,7 @@ Export credentials to current shell? [Y/n]: y
 ✓ Exported 4 variables for profile 'myprofile'
 ```
 
-Variables are set via eval-ready output (same mechanism as hooks).
+The shell wrapper function evaluates the export statements emitted by the CLI. Variables **are set directly in the current shell session**. No `eval` wrapper needed.
 
 If user declines:
 
@@ -41,27 +47,64 @@ export AWS_SECRET_ACCESS_KEY='...'
 export AWS_SESSION_TOKEN='...'
 ```
 
-Falls back to printing export statements (current behavior).
+Falls back to printing export statements without applying them (current behavior).
 
-#### Non-interactive / JSON / piped: Unchanged
+#### Non-interactive / piped (via shell wrapper):
 
 ```
 $ dotaws login --profile myprofile --non-interactive
-export AWS_PROFILE='myprofile'
-...
+```
 
+Shell wrapper detects `--non-interactive` or non-TTY stdout and **applies the exports directly** (no prompt). Variables are set in the current shell.
+
+#### JSON format: Unchanged (no auto-export)
+
+```
 $ dotaws login --profile myprofile --format json
 {"status": "ok", "profile": "myprofile", ...}
+```
 
-$ dotaws login --profile myprofile | grep AWS
-export AWS_PROFILE='myprofile'
-...
+JSON output is printed to stdout as-is; the wrapper does **not** eval JSON output.
+
+### Changed Command: `dotaws hook print`
+
+The emitted shell integration snippet now includes a `dotaws()` wrapper function in addition to the existing directory-change hook.
+
+#### Bash/Zsh wrapper (emitted as part of hook snippet):
+
+```bash
+dotaws() {
+  if [ "$1" = "login" ]; then
+    local output
+    output="$(command dotaws "$@")"
+    local rc=$?
+    if [ $rc -eq 0 ] && [ -n "$output" ]; then
+      eval "$output"
+    fi
+    return $rc
+  fi
+  command dotaws "$@"
+}
+```
+
+#### PowerShell wrapper (emitted as part of hook snippet):
+
+```powershell
+function dotaws {
+  if ($args[0] -eq 'login') {
+    $output = & (Get-Command dotaws -CommandType Application) @args
+    if ($LASTEXITCODE -eq 0 -and $output) {
+      $output | Invoke-Expression
+    }
+    return
+  }
+  & (Get-Command dotaws -CommandType Application) @args
+}
 ```
 
 ### Unchanged Commands
 
-- `dotaws hook print` — no changes
-- `dotaws hook check` — no changes (already applies exports via eval)
+- `dotaws hook check` — no changes (already applies exports via eval in the existing hook)
 
 ### Exit Codes
 

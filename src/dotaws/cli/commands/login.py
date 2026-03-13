@@ -16,6 +16,7 @@ from dotaws.shared.io import (
     ask_text,
     print_error,
     print_info,
+    print_raw,
     print_success,
     print_warning,
 )
@@ -163,7 +164,7 @@ def login(
                 f"Exported {len(payload.env)} variables for profile '{resolved.name}'"
             )
         else:
-            print(script)
+            print_raw(script)
     except DotawsError as exc:
         print_error(exc.message, exc.hint)
         raise typer.Exit(code=int(exc.exit_code)) from exc
