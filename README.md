@@ -9,11 +9,30 @@ Cross-shell AWS helper CLI for PowerShell, Bash, and Zsh.
 - `.aws_profile` directory marker support with confirmation
 - Shell hook snippet generation (`dotaws hook print`)
 
-## Install (dev)
-- Python 3.14
-- Install uv: `https://docs.astral.sh/uv/`
-- Sync deps: `uv sync --dev`
-- Run commands with uv: `uv run dotaws --help`
+## Install
+
+### From GitHub (no clone needed)
+
+```bash
+# Run directly without installing
+uvx --from git+https://github.com/wrutek/dotaws dotaws --help
+
+# Install as a global tool
+uv tool install git+https://github.com/wrutek/dotaws
+```
+
+### From source (development)
+
+```bash
+git clone git@github.com:wrutek/dotaws.git
+cd dotaws
+uv sync --dev
+uv run dotaws --help
+```
+
+### Requirements
+- Python 3.14+
+- [uv](https://docs.astral.sh/uv/)
 
 ## Commands
 - `dotaws login [--profile NAME] [--mfa-code CODE] [--shell powershell|bash|zsh] [--non-interactive] [--format shell|json]`
