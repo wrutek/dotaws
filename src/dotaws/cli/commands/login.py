@@ -1,6 +1,8 @@
 """Login command implementation."""
 
 import json
+import os
+import sys
 
 import typer
 
@@ -9,7 +11,14 @@ from dotaws.auth.credential_export import build_export_payload
 from dotaws.auth.mfa import get_mfa_token
 from dotaws.project.profile_marker import find_nearest_marker
 from dotaws.shared.errors import DotawsError, ProfileResolutionError, UsageError
-from dotaws.shared.io import ask_text, print_error, print_info
+from dotaws.shared.io import (
+    ask_confirm,
+    ask_text,
+    print_error,
+    print_info,
+    print_success,
+    print_warning,
+)
 from dotaws.shared.models import AuthenticatedSession, AwsProfileContext, InvocationMode
 from dotaws.shell.detection import detect_shell
 
@@ -102,6 +111,20 @@ def execute_login(
     return payload.script
 
 
+def _check_existing_env_vars(env: dict[str, str]) -> list[str]:
+    """Return names of env vars from *env* that already exist in os.environ."""
+    return [key for key in env if key in os.environ]
+
+
+def _should_prompt_export(*, non_interactive: bool, output_format: str) -> bool:
+    """Return True when the interactive export prompt should be shown."""
+    if non_interactive:
+        return False
+    if output_format == "json":
+        return False
+    return sys.stdout.isatty()
+
+
 def login(
     profile: str | None = typer.Option(default=None, help="Explicit profile name."),
     mfa_code: str | None = typer.Option(default=None, help="MFA token code."),
@@ -109,16 +132,38 @@ def login(
     non_interactive: bool = typer.Option(default=False, help="Disable prompts."),
     format: str = typer.Option(default="shell", help="Output format: shell|json."),
 ) -> None:
-    """Authenticate and print shell activation output."""
+    """Authenticate and export shell credentials."""
     try:
-        result = execute_login(
-            profile_name=profile,
-            mfa_code=mfa_code,
-            shell=shell,
-            non_interactive=non_interactive,
-            output_format=format,
-        )
-        print(result)
+        mode = InvocationMode.NON_INTERACTIVE if non_interactive else InvocationMode.INTERACTIVE
+        resolved = _resolve_profile(profile, mode)
+        session = _authenticate(resolved, mfa_code, mode)
+        payload = build_export_payload(session, detect_shell(shell))
+
+        if format == "json":
+            print(json.dumps({
+                "status": "ok",
+                "profile": resolved.name,
+                "shell": payload.shell.value,
+                "env": payload.env,
+            }))
+            return
+
+        script = payload.script
+
+        if not _should_prompt_export(non_interactive=non_interactive, output_format=format):
+            print(script)
+            return
+
+        if ask_confirm("Export credentials to current shell?", default=True):
+            existing = _check_existing_env_vars(payload.env)
+            if existing:
+                print_warning(f"Overwriting: {', '.join(existing)}")
+            print(script)
+            print_success(
+                f"Exported {len(payload.env)} variables for profile '{resolved.name}'"
+            )
+        else:
+            print(script)
     except DotawsError as exc:
         print_error(exc.message, exc.hint)
         raise typer.Exit(code=int(exc.exit_code)) from exc

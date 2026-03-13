@@ -16,6 +16,14 @@ def print_info(message: str) -> None:
     console.print(message)
 
 
+def print_warning(message: str) -> None:
+    console.print(f"[yellow]⚠ {message}[/yellow]")
+
+
+def print_success(message: str) -> None:
+    console.print(f"[green]✓ {message}[/green]")
+
+
 def ask_text(message: str) -> str:
     return Prompt.ask(message)
 
