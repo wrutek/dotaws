@@ -15,7 +15,7 @@ def test_login_json_contract(monkeypatch) -> None:
 
     monkeypatch.setattr(
         "dotaws.auth.profile_discovery.find_profile",
-        lambda name: type("P", (), {"name": name, "requires_mfa": False})(),
+        lambda name: type("P", (), {"name": name, "requires_mfa": False, "requires_sso": False})(),
     )
     monkeypatch.setattr(
         "dotaws.auth.session_service.acquire_session",

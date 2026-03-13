@@ -23,6 +23,20 @@ def discover_profiles() -> list[AwsProfileContext]:
     for name, settings in sorted(profiles_section.items()):
         if not isinstance(settings, dict):
             continue
+
+        # Resolve sso_session indirection: if profile references an
+        # [sso-session X] block, pull sso_start_url / sso_region from it.
+        sso_session_name = settings.get("sso_session")
+        sso_start_url = settings.get("sso_start_url")
+        sso_region = settings.get("sso_region")
+        if sso_session_name:
+            sso_sessions = config.get("sso_sessions", {})
+            sso_block = sso_sessions.get(sso_session_name, {})
+            if not sso_start_url:
+                sso_start_url = sso_block.get("sso_start_url")
+            if not sso_region:
+                sso_region = sso_block.get("sso_region")
+
         profiles.append(
             AwsProfileContext(
                 name=name,
@@ -31,6 +45,11 @@ def discover_profiles() -> list[AwsProfileContext]:
                 role_arn=settings.get("role_arn"),
                 source_profile=settings.get("source_profile"),
                 mfa_serial=settings.get("mfa_serial"),
+                sso_start_url=sso_start_url,
+                sso_region=sso_region,
+                sso_account_id=settings.get("sso_account_id"),
+                sso_role_name=settings.get("sso_role_name"),
+                sso_session=sso_session_name,
             )
         )
     return profiles

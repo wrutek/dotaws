@@ -24,10 +24,19 @@ class AwsProfileContext:
     role_arn: str | None = None
     source_profile: str | None = None
     mfa_serial: str | None = None
+    sso_start_url: str | None = None
+    sso_region: str | None = None
+    sso_account_id: str | None = None
+    sso_role_name: str | None = None
+    sso_session: str | None = None
 
     @property
     def requires_mfa(self) -> bool:
         return bool(self.mfa_serial)
+
+    @property
+    def requires_sso(self) -> bool:
+        return bool(self.sso_start_url or self.sso_session)
 
 
 @dataclass(slots=True)

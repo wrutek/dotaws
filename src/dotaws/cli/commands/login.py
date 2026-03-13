@@ -76,6 +76,8 @@ def _authenticate(
     mfa_code: str | None,
     mode: InvocationMode,
 ) -> AuthenticatedSession:
+    if profile.requires_sso:
+        return session_service.acquire_sso_session(profile)
     if profile.requires_mfa:
         if mode is InvocationMode.NON_INTERACTIVE and not mfa_code:
             raise UsageError(
