@@ -31,7 +31,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Python 3.14 + typed design: language version pinned; type strategy defined.
+- [ ] Cross-shell UX parity: PowerShell and Bash/Zsh behavior mapped.
+- [ ] Security defaults: no plaintext secrets; explicit `.aws_profile` confirmation.
+- [ ] Quality gates: tests for changed behavior, lint, and type checks planned.
+- [ ] Simplicity: minimal commands/config; no hidden credential state transitions.
 
 ## Project Structure
 

@@ -100,6 +100,14 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## Constitution Alignment *(mandatory)*
+
+- **Python & Typing**: [How Python version and type-hint expectations are satisfied]
+- **Cross-Shell UX**: [How PowerShell and Bash/Zsh parity is ensured]
+- **Security Defaults**: [How secrets handling and confirmation flows are enforced]
+- **Quality Gates**: [Which tests/lint/type checks are required for this feature]
+- **Simplicity & Reliability**: [How complexity is minimized and behavior stays explicit]
+
 ## Success Criteria *(mandatory)*
 
 <!--
